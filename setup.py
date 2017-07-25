@@ -17,6 +17,7 @@ setup(name="dirods",
           "click",
           "dtoolcore",
           "pygments",
+          "python-irodsclient",
       ],
       entry_points={
           'console_scripts': ['dirods=dirods.cli:cli']

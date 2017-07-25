@@ -87,14 +87,44 @@ def get(uuid):
 
     irods_zone = '/jic_archive'
     idataset_basepath = os.path.join(irods_zone, uuid)
-    imanifest_path = os.path.join(idataset_basepath, 'manifest.json')
 
+    idtool_path = os.path.join(idataset_basepath, 'dtool')
+    icmd = ['iget', idtool_path, '-']
+    raw_admin_metadata = subprocess.check_output(icmd)
+    admin_metadata = json.loads(raw_admin_metadata)
+    dataset_name = admin_metadata['name']
+
+    imanifest_path = os.path.join(idataset_basepath, 'manifest.json')
     icmd = ['iget', imanifest_path, '-']
     raw_manifest = subprocess.check_output(icmd)
-
     manifest = json.loads(raw_manifest)
 
-    data_root = 'dirods'
+    dataset_root_path = dataset_name
+    dtool_dir_path = os.path.join(dataset_root_path, '.dtool')
+    mkdir_parents(dtool_dir_path)
+
+    dtool_file_path = os.path.join(dtool_dir_path, 'dtool')
+    with open(dtool_file_path, 'w') as fh:
+        fh.write(raw_admin_metadata)
+
+    manifest_file_path = os.path.join(
+        dataset_root_path,
+        admin_metadata['manifest_path']
+    )
+    with open(manifest_file_path, 'w') as fh:
+        fh.write(raw_manifest)
+
+    ireadme_path = os.path.join(idataset_basepath, 'README.yml')
+    readme_path = os.path.join(
+        dataset_root_path,
+        admin_metadata['readme_path']
+    )
+    icmd = ['iget', ireadme_path, readme_path]
+    run_icmd(icmd)
+    data_root = os.path.join(
+        dataset_root_path,
+        admin_metadata['manifest_root']
+    )
     for entry in manifest['file_list']:
         dest_full_path = os.path.join(data_root, entry['path'])
 
