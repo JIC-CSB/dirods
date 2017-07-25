@@ -138,3 +138,37 @@ def get(uuid):
             ipath = os.path.join(idataset_basepath, entry['hash'])
             icmd = ['iget', ipath, dest_full_path]
             run_icmd(icmd)
+
+
+@cli.command()
+@dataset_path_option
+def storemeta(dataset_path):
+    dataset = dtoolcore.DataSet.from_path(dataset_path)
+    irods_zone = '/jic_archive'
+    idataset_basepath = os.path.join(irods_zone, dataset.uuid)
+
+    for k, v, in dataset._admin_metadata.items():
+        icmd = ['imeta', 'add', '-C', idataset_basepath, k, v]
+        run_icmd(icmd)
+
+
+@cli.command()
+def list():
+    irods_zone = '/jic_archive'
+
+    icmd = ['ils', irods_zone]
+
+    results = subprocess.check_output(icmd)
+
+    collection_lines = results.split('\n')[1:-1]
+
+    def getmeta(cpath):
+        icmd = ['imeta', 'ls', '-C', cpath, 'name']
+        r = subprocess.check_output(icmd)
+        value_line = r.split('\n')[2]
+        return value_line.split()[1]
+
+    for cl in collection_lines:
+        c_path = cl.split()[1]
+        uuid = c_path.split('/')[2]
+        print(uuid, getmeta(c_path))
